@@ -1,1 +1,471 @@
-random
+<!--
+    Name: Katie Imhof
+    Class name: CPSC 332
+    Assignment name: HW4
+    Last modified: 21 October 2022
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Quiz App</title>
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            font-family: Gotham Rounded;
+        }
+
+        :root {
+            --hue-neutral: 200;
+            --hue-wrong: 0;
+            --hue-correct: 145;
+        }
+
+        body {
+            --hue: var(--hue-neutral);
+            padding: 0;
+            margin: 0;
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+            justify-content: center;
+            align-items: center;
+            background-color: orangered;
+        }
+
+        body.correct {
+            background-color: orange;
+        }
+
+        body.wrong {
+            background-color: black;
+        }
+
+        .container {
+            width: 800px;
+            max-width: 80%;
+            background-color: white;
+            border-radius: 5px;
+            padding: 10px;
+            box-shadow: 0 0 10px 2px;
+        }
+
+        .btn-grid {
+            display: grid;
+            grid-template-columns: repeat(2, auto);
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .btn {
+            --hue: var(--hue-neutral);
+            border: 1px solid hsl(var(--hue), 100%, 30%);
+            background-color: purple;
+            border-radius: 5px;
+            padding: 5px 10px;
+            color: white;
+            outline: none;
+        }
+
+        .btn:hover {
+            border-color: black;
+        }
+
+        .btn.correct {
+            --hue: var(--hue-correct);
+            color: orange;
+        }
+
+        .btn.wrong {
+            color: black;
+        }
+
+        .start-btn,
+        .next-btn,
+        .prev-btn {
+            font-size: 1.5rem;
+            font-weight: bold;
+            padding: 10px 20px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .hide {
+            display: none;
+        }
+
+        #container {
+            border: 2px dashed purple;
+            background-color: cornsilk;
+            margin: 15px;
+            padding: 15px;
+            height: 175px;
+        }
+
+        div {
+            text-align: center;
+        }
+
+        #output {
+            align-content: center
+        }
+
+        #timer {
+            display: cotenets;
+        }
+
+        #answers {
+            border: 2px dashed purple;
+            background-color: cornsilk;
+            margin: 15px;
+            padding: 15px;
+            height: 175px;
+            width: 600px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #container1 {
+            width: 800px;
+            max-width: 80%;
+            background-color: white;
+            border-radius: 5px;
+            padding: 10px;
+            box-shadow: 0 0 10px 2px; 
+            position: absolute;
+            top: 20px;
+        }
+    </style>
+    <script>
+
+
+
+        // Add an event listener for the DOMContentLoaded event
+        window.addEventListener("DOMContentLoaded", domLoaded);
+
+        function domLoaded() {
+            const startButton = document.getElementById('start-btn')
+            const nextButton = document.getElementById('next-btn')
+            const prevButton = document.getElementById('prev-btn')
+            const resetButton = document.getElementById('reset-btn')
+            const questionContainerElement = document.getElementById('question-container')
+            const questionElement = document.getElementById('question')
+            const answerButtonsElement = document.getElementById('answer-buttons')
+            const optionsDiv = document.getElementById('options')
+            
+            let shuffleBool = null;
+            var clock = null;
+            
+
+            // This function adds the div that contains additional information about the quiz question
+            function addDiv() {
+                let newDiv = document.createElement("div");
+                newDiv.id = "info-div";
+                newDiv.style = "border: 2px dashed blue; padding: 10px; border-radius: 30px; margin: 15px; background-color: cornsilk;";
+                document.getElementById("container1").appendChild(newDiv);
+
+                let newQ = document.createElement("p");
+                newQ.textContent = shuffledQuestions[currentQuestionIndex].fact;
+                document.getElementById("info-div").appendChild(newQ);
+            }
+            
+            let shuffledQuestions, currentQuestionIndex
+            //using the domLoaded function because the buttons need to be rendered before we can
+            //add an event listener
+            startButton.addEventListener('click', () => {
+                optionsDiv.classList.add('hide')
+                if((document.getElementById("timed").checked) == true) {
+                    startClock()
+                }
+                startGame()
+            })
+            nextButton.addEventListener('click', () => {
+                // remove the top container
+                removeDiv()
+                currentQuestionIndex++
+                setNextQuestion()
+            })
+            prevButton.addEventListener('click', () => {
+                currentQuestionIndex--
+                setNextQuestion()
+            }) 
+
+            // This function starts the timer
+            function startClock() {
+                clock = setInterval(updateClock, 1000);
+            }
+
+            // This function stops the timer
+            function stopClock() {
+                clearInterval(clock);
+            }
+
+            // This function updates the tiemr
+            function updateClock() {
+                let date = new Date();
+                document.getElementById("date-span").textContent = date;
+            }
+ 
+            // This function starts the quiz
+            function startGame() {
+                startButton.classList.add('hide')
+                if((document.getElementById("shuffle").checked) == true) {
+                    shuffledQuestions = questions.sort(() => Math.random() - .5)
+                }
+                else {
+                    shuffledQuestions = questions;
+                }
+                
+                currentQuestionIndex = 0
+                questionContainerElement.classList.remove('hide')
+                setNextQuestion()
+            }
+
+            // This function goes to the next question
+
+            function setNextQuestion() {
+                var lastIndex = shuffledQuestions.lastIndexOf()
+                resetState()
+                if (currentQuestionIndex != lastIndex) {
+                    showQuestion(shuffledQuestions[currentQuestionIndex])
+                }
+                else {
+                    displayRestartBtn()
+                }
+            }
+
+            // This function displays the restart button
+            function displayRestartBtn() {
+                prevButton.classList.remove('hide') // display again
+            }
+
+            // This function removes the div that contains extra information about the quiz
+            function removeDiv() {
+                if (document.getElementById("info-div") != null) {
+                    document.getElementById("info-div").remove();
+                }
+            }
+
+            // This function displays the question
+            function showQuestion(question) {
+                questionElement.innerText = question.question
+                question.answers.forEach(answer => {
+                    const button = document.createElement('button')
+                    button.innerText = answer.text
+                    button.classList.add('btn')
+                    if (answer.correct) {
+                        button.dataset.correct = answer.correct
+                    }
+                    button.addEventListener('click', selectAnswer)
+                    answerButtonsElement.appendChild(button)
+                })
+            }
+
+            // This function resets the state of the question
+            function resetState() {
+                clearStatusClass(document.body)
+                nextButton.classList.add('hide')
+                prevButton.classList.add('hide')
+                while (answerButtonsElement.firstChild) {
+                    answerButtonsElement.removeChild(answerButtonsElement.firstChild)
+                }
+            }
+
+            // This function is called when then user selects an answer, 
+            // and it changes the buttons and the status of the buttons
+            function selectAnswer(e) {
+                addDiv()
+                const selectedButton = e.target
+                const correct = selectedButton.dataset.correct
+                setStatusClass(document.body, correct)
+                Array.from(answerButtonsElement.children).forEach(button => {
+                    setStatusClass(button, button.dataset.correct)
+                })
+                if (shuffledQuestions.length > currentQuestionIndex + 1) {
+                    nextButton.classList.remove('hide')
+                    prevButton.classList.remove('hide')
+                } else {
+                    startButton.innerText = 'Restart'
+                    if((document.getElementById("timed").checked) == true) {
+                        stopClock()
+                    }
+                    startButton.classList.remove('hide')
+                    removeDiv()
+                    startButton.addEventListener('click', () => {
+                        currentQuestionIndex = 0
+                        let end = Date.now();
+                        let elapsed = end - start;  
+                        startButton.innerText = elapsed;
+                    })
+                }
+            }
+
+            // This function changes the colors of the buttons
+            function setStatusClass(element, correct) {
+                clearStatusClass(element)
+                if (correct) {
+                    element.classList.add('correct')
+                } else {
+                    element.classList.add('wrong')
+                }
+            }
+
+            // This function resets the colors of the buttons
+            function clearStatusClass(element) {
+                element.classList.remove('correct')
+                element.classList.remove('wrong')
+            }
+
+            let correct_question = []
+
+            const questions = [
+                {
+                    question: 'What year was Hocus Pocus released?',
+                    fact: 'Hocus Pocus is my favorite movie!',
+                    answers: [
+                        { text: '1993', correct: true },
+                        { text: '2000', correct: false },
+                        { text: '1987', correct: false},
+                        {text: '1990', correct: false}
+                    ]
+                },
+                {
+                    question: 'What month was Hocus Pocus released?',
+                    fact: 'This will catch you by surprise!',
+                    answers: [
+                        { text: 'July', correct: true },
+                        { text: 'October', correct: false },
+                        { text: 'September', correct: false },
+                        { text: 'March', correct: false }
+                    ]
+                },
+                {
+                    question: 'What is the main characters name in Hocus Pocus?',
+                    fact: 'Winnie is my fav!',
+                    answers: [
+                        { text: 'Melinda', correct: false },
+                        { text: 'Marissa', correct: false },
+                        { text: 'Winnie', correct: true },
+                        { text: 'Rachel', correct: false }
+                    ]
+                },
+                {
+                    question: 'Who lit the black flame candle in Hocus Pocus?',
+                    fact: 'Dang it Max!',
+                    answers: [
+                        { text: 'Danny', correct: false },
+                        { text: 'Max', correct: true },
+                        { text: 'Winnie', correct: false },
+                        { text: 'Allison', correct: false }
+                    ]
+                },
+                {
+                    question: 'What town was Hocus Pocus based in?',
+                    fact: 'I wish it was based in Washington!',
+                    answers: [
+                        { text: 'Seattle', correct: false },
+                        { text: 'Salem', correct: true },
+                        { text: 'Tacoma', correct: false },
+                        { text: 'Nashville', correct: false }
+                    ]
+                },
+                {
+                    question: 'What acctress played Winnie in Hocus Pocus?',
+                    fact: 'This was Bette Midlers fav movie to film!',
+                    answers: [
+                        { text: 'Bette Midler', correct: true },
+                        { text: 'Sarah Jessica Parker', correct: false },
+                        { text: 'Emily Blunt', correct: false },
+                        { text: 'Kate Hudson', correct: false }
+                    ]
+                },
+                {
+                    question: 'How many witches are in Hocus Pocus?',
+                    fact: '3 is the perfect number',
+                    answers: [
+                        { text: '2', correct: false },
+                        { text: '5', correct: false },
+                        { text: '4', correct: false },
+                        { text: '3', correct: true }
+                    ]
+                },
+                {
+                    question: 'What was the cats name in Hocus Pocus?',
+                    fact: 'One day I want to name my cat Binx',
+                    answers: [
+                        { text: 'Pumpkin', correct: false },
+                        { text: 'Kitty', correct: false },
+                        { text: 'Binx', correct: true },
+                        { text: 'Rascal', correct: false }
+                    ]
+                },
+                {
+                    question: 'Who ate a spider in Hocus Pocus?',
+                    fact: 'She actually did it in real life!',
+                    answers: [
+                        { text: 'Sarah', correct: true },
+                        { text: 'Winnie', correct: false },
+                        { text: 'Mary', correct: false },
+                        { text: 'Danny', correct: false }
+                    ]
+                },
+                {
+                    question: 'What was shaved on the back of Ernies head in Hocus Pocus?',
+                    fact: 'So odd!',
+                    answers: [
+                        { text: 'Hello', correct: false },
+                        { text: 'Ice', correct: true },
+                        { text: 'Bye', correct: false },
+                        { text: 'Ray', correct: false }
+                    ]
+                },
+            ]   
+        }
+    </script>
+</head>
+
+<body>
+    <div class="container">
+        <div id="container1">
+        </div>
+        <div id="options" style="border: 2px dashed orange; padding: 10px; border-radius: 30px; margin: 15px;">
+            Options:
+            <input type="checkbox" id="shuffle" checked>
+            <label for="shuffle">Shuffle Cards: </label>
+            <input type="checkbox" id="timed">
+            <label for="timed">Timed session: </label>
+            <input type="checkbox" id="remove">
+            <label for="remove">Remove Correct From Deck: </label>
+        </div>
+        <div id="question-container" class="hide">
+            <div id="question">Question</div>
+            <div id="answer-buttons" class="btn-grid">
+                <button class="btn">Answer 1</button>
+                <button class="btn">Answer 2</button>
+                <button class="btn">Answer 3</button>
+                <button class="btn">Answer 4</button>
+            </div>
+        </div>
+        <div class="controls">
+            <p id="date-span"></p>
+            <button id="start-btn" class="start-btn btn">Start</button>
+            <button id="prev-btn" class="prev-btn btn hide">Back</button>
+            <button id="next-btn" class="next-btn btn hide">Next</button>
+            <button id="reset-btn" class="reset-btn btn hide">Restart</button>
+        </div>
+    </div>
+</body>
+
+
+
+</html>
